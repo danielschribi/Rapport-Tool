@@ -7,6 +7,8 @@ import cors from "cors";
 import multer from "multer";
 import sharp from "sharp";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 dotenv.config();
 
 import {
@@ -28,6 +30,16 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// öffentliche Dateien
+app.use(express.static(path.join(__dirname, "..", "public")));
+
+// geschützte App-Route -> nur nach Login
+app.get("/app", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
 
 /** ---------- LOGIN (Google OAuth) ---------- **/
 passport.serializeUser((user, done) => done(null, user));
