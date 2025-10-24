@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rapport-Tool</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Rapport-Tool</div>
+    <nav class="nav">
+      <button id="btnLogin" class="btn btn-primary" onclick="location.href='/auth/google'">Mit Google anmelden</button>
+      <button id="btnApp" class="btn" onclick="location.href='/'">Home</button>
+      <button id="btnLogout" class="btn btn-outline" hidden>Abmelden</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card" id="secUser">
+      <h2>Benutzer</h2>
+      <div id="userInfo" class="muted">Nicht angemeldet.</div>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <h2>Rapport erfassen</h2>
+        <form id="frmRapport" class="form">
+          <div class="row">
+            <label for="rId">Rapport-ID*</label>
+            <input id="rId" required placeholder="z. B. R-0001" />
+          </div>
+          <div class="row">
+            <label for="rTitel">Titel*</label>
+            <input id="rTitel" required />
+          </div>
+          <div class="row">
+            <label for="rText">Beschreibung</label>
+            <textarea id="rText" rows="4"></textarea>
+          </div>
+          <div class="row">
+            <label for="rDatum">Datum</label>
+            <input id="rDatum" type="date" />
+          </div>
+          <div class="row">
+            <button type="submit" class="btn btn-primary">Speichern</button>
+          </div>
+          <p class="muted small">Wird als Einzelmeldung in <code>/meldungen</code> gespeichert und in <code>DB/meldungen.json</code> gespiegelt.</p>
+        </form>
+
+        <hr />
+
+        <h3>Foto hochladen (max 600×800)</h3>
+        <form id="frmUpload" class="form">
+          <div class="row">
+            <input id="fFile" type="file" accept="image/*,application/pdf" required />
+          </div>
+          <div class="row">
+            <input id="fName" placeholder="Dateiname (optional)" />
+          </div>
+          <div class="row">
+            <button class="btn">Hochladen</button>
+          </div>
+          <div id="uploadResult" class="muted small"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="flex">
+          <h2 class="grow">Meldungen</h2>
+          <button class="btn" id="btnReload">Aktualisieren</button>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="tblMeldungen">
+            <thead>
+              <tr><th>ID</th><th>Titel</th><th>Datum</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>DB-Dateien</h2>
+      <p class="muted small">Diese JSONs liegen im Ordner <code>DB</code> deines Drive-Links (Excel-lesbar):</p>
+      <ul id="dbInfo" class="muted"></ul>
+      <button id="btnLoadDb" class="btn">DB laden</button>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© Rapport-Tool</span>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
