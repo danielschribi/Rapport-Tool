@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Rapport‑Tool</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="left">
+      <button id="avatarBtn" class="avatar unknown" title="Anmelden">
+        <span class="avatar-initials">?</span>
+      </button>
+      <div class="head-menus">
+        <button id="btnSystem" class="pill pill-left" title="System verwalten">
+          <span class="icon">⚙️</span><span>System</span>
+        </button>
+        <button id="btnUsers" class="pill" title="Userverwaltung öffnen">
+          <span class="icon">👥</span><span>Userverwaltung</span>
+        </button>
+      </div>
+    </div>
+    <div class="center">
+      <div id="clock" class="clock">--:--</div>
+      <div id="date"  class="date">--.--.----</div>
+    </div>
+    <div class="right">
+      <button id="btnNew" class="pill pill-right strong" title="Neue Meldung erfassen">
+        <span class="icon">➕</span><span>Neue Meldung</span>
+      </button>
+      <button id="homeBtn" class="home" title="Zum Startbildschirm (Änderungen verwerfen)">
+        <span class="home-icon">🏠</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="main">
+    <section class="card full">
+      <div class="toolbar">
+        <label>Anlage:
+          <select id="fAnlage"><option value="">alle</option></select>
+        </label>
+        <label>Bereich:
+          <select id="fBereich"><option value="">alle</option></select>
+        </label>
+        <label>Status:
+          <select id="fStatus"><option value="">alle</option></select>
+        </label>
+        <label>Melder:
+          <input id="fMelder" type="text" placeholder="alle"/>
+        </label>
+        <button id="btnReset" class="ghost">Filter zurücksetzen</button>
+      </div>
+
+      <div class="tablewrap">
+        <table class="grid" id="tbl">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Titel</th>
+              <th>Anlage</th>
+              <th>Bereich</th>
+              <th>Status</th>
+              <th>Melder</th>
+              <th>Datum</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
