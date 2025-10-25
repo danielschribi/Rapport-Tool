@@ -1,76 +1,66 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Rapport‑Tool</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rapport-Tool</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="topbar" id="topbar">
-    <div class="left">
-      <button id="avatarBtn" class="avatar unknown" title="Anmelden">
-        <span class="avatar-initials">?</span>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <!-- Home ganz links -->
+    <button id="btnHome" class="home-btn" title="Zum Start (Eingaben verwerfen)">
+      <i class="i-home"></i>
+    </button>
+
+    <!-- Menü im Kopf -->
+    <nav class="main-actions">
+      <button id="btnNew" class="pill-btn" title="Neue Meldung">
+        <i class="i-plus"></i><span>Neue Meldung</span>
       </button>
-      <div class="head-menus">
-        <button id="btnSystem" class="pill pill-left" title="System verwalten">
-          <span class="icon">⚙️</span><span>System</span>
-        </button>
-        <button id="btnUsers" class="pill" title="Userverwaltung öffnen">
-          <span class="icon">👥</span><span>Userverwaltung</span>
-        </button>
-      </div>
-    </div>
-    <div class="center">
-      <div id="clock" class="clock">--:--</div>
-      <div id="date"  class="date">--.--.----</div>
-    </div>
-    <div class="right">
-      <button id="btnNew" class="pill pill-right strong" title="Neue Meldung erfassen">
-        <span class="icon">➕</span><span>Neue Meldung</span>
+      <div class="spacer"></div>
+      <button id="btnUsers" class="pill-btn" title="Userverwaltung">
+        <i class="i-users"></i><span>Userverwaltung</span>
       </button>
-      <button id="homeBtn" class="home" title="Zum Startbildschirm (Änderungen verwerfen)">
-        <span class="home-icon">🏠</span>
+      <button id="btnSystem" class="pill-btn" title="System">
+        <i class="i-gear"></i><span>System</span>
       </button>
+    </nav>
+
+    <!-- Uhr/Datum in der Mitte -->
+    <div class="clock">
+      <div id="clockTime">--:--</div>
+      <div id="clockDate">--.--.----</div>
     </div>
+
+    <!-- Avatar ganz rechts -->
+    <button id="avatarBtn" class="avatar-btn" title="Anmelden/Profil">
+      <span class="avatar-badge">?</span>
+    </button>
   </header>
 
-  <main id="main" class="main">
-    <section class="card full">
-      <div class="toolbar">
-        <label>Anlage:
-          <select id="fAnlage"><option value="">alle</option></select>
-        </label>
-        <label>Bereich:
-          <select id="fBereich"><option value="">alle</option></select>
-        </label>
-        <label>Status:
-          <select id="fStatus"><option value="">alle</option></select>
-        </label>
-        <label>Melder:
-          <input id="fMelder" type="text" placeholder="alle"/>
-        </label>
-        <button id="btnReset" class="ghost">Filter zurücksetzen</button>
-      </div>
+  <!-- Weißes Panel volle Breite (ohne Starttitel) -->
+  <section class="card fullwidth">
+    <div class="filters">
+      <label>Anlage:
+        <select id="fAnlage"></select>
+      </label>
+      <label>Bereich:
+        <select id="fBereich"></select>
+      </label>
+      <label>Status:
+        <select id="fStatus"></select>
+      </label>
+      <label>Melder:
+        <input id="fMelder" type="text" placeholder="alle" />
+      </label>
+      <button id="btnReset" class="ghost">Filter zurücksetzen</button>
+    </div>
 
-      <div class="tablewrap">
-        <table class="grid" id="tbl">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Titel</th>
-              <th>Anlage</th>
-              <th>Bereich</th>
-              <th>Status</th>
-              <th>Melder</th>
-              <th>Datum</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+    <div id="meldungenTable"></div>
+  </section>
 
   <script src="app.js"></script>
 </body>
