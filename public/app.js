@@ -1,104 +1,159 @@
-const $ = (sel) => document.querySelector(sel);
-const userInfo = $("#userInfo");
-const btnLogout = $("#btnLogout");
-const btnLogin  = $("#btnLogin");
-const btnReload = $("#btnReload");
-const btnLoadDb = $("#btnLoadDb");
-const tblBody   = $("#tblMeldungen tbody");
+const $ = s => document.querySelector(s);
+const api = (u, opt={}) => fetch(u, { credentials:"include", ...opt }).then(r=>r.json());
 
-async function json(url, opt){
-  const r = await fetch(url, opt);
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
+const state = {
+  me:null, sys:null, list:[],
+  filter:{ anlage:"", bereich:"", status:"", melder:"" }
+};
+
+function tick(){
+  const d = new Date(), p=n=>String(n).padStart(2,"0");
+  $("#clock").textContent = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  $("#date").textContent  = `${p(d.getDate())}.${p(d.getMonth()+1)}.${String(d.getFullYear()).slice(-2)}`;
+}
+setInterval(tick, 1000); tick();
+
+function setButtonsEnabled(on){
+  ["#btn-new","#btn-users","#btn-system"].forEach(id=>{
+    $(id).disabled = !on;
+  });
 }
 
-async function me(){
-  try{
-    const m = await json("/me");
-    if(m?.user?.email){
-      userInfo.innerHTML = `<b>${m.user.name || m.user.email}</b> &middot; ${m.user.email}`;
-      btnLogout.hidden = false; btnLogin.hidden = true;
-      loadMeldungen();
-    }else{
-      userInfo.textContent = "Nicht angemeldet.";
-      btnLogout.hidden = true; btnLogin.hidden = false;
-    }
-  }catch(e){
-    userInfo.textContent = "Nicht angemeldet.";
+function setAvatar(){
+  const av = $("#avatar");
+  if(!state.me){
+    av.className = "avatar idle";
+    av.textContent = "?";
+    av.title = "Anmelden";
+    setButtonsEnabled(false);
+  }else{
+    av.className = "avatar ok";
+    const ini = (state.me.vorname?.[0]||"") + (state.me.nachname?.[0]||"");
+    av.textContent = ini.toUpperCase();
+    av.title = `${state.me.vorname} ${state.me.nachname} (${state.me.rolle}) – Abmelden?`;
+    setButtonsEnabled(true);
   }
 }
 
-async function loadMeldungen(){
-  try{
-    const arr = await json("/api/meldungen");
-    tblBody.innerHTML = "";
-    for(const it of arr){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${it.id||""}</td><td>${it.titel||""}</td><td>${it.erstelltAm||""}</td>`;
-      tblBody.appendChild(tr);
+async function loadSystem(){
+  const r = await api("/api/system");
+  if(r.ok){
+    state.sys = r;
+    for(const [id,arr] of Object.entries({ "#f-anlage":r.anlage, "#f-bereich":r.bereich, "#f-status":r.status })){
+      const sel = $(id); sel.innerHTML = `<option value="">alle</option>` + arr.map(x=>`<option>${x}</option>`).join("");
     }
-  }catch(e){
-    console.error(e);
-    alert("Konnte Meldungen nicht laden (angemeldet?)");
   }
 }
 
-$("#frmRapport").addEventListener("submit", async (ev)=>{
-  ev.preventDefault();
-  const id = $("#rId").value.trim();
-  const titel = $("#rTitel").value.trim();
-  const text = $("#rText").value.trim();
-  const datum = $("#rDatum").value || new Date().toISOString().slice(0,10);
-  if(!id || !titel){ alert("ID und Titel sind Pflicht."); return; }
+function applyFilter(list){
+  const f = state.filter;
+  return list.filter(r =>
+    (!f.anlage || r.anlage===f.anlage) &&
+    (!f.bereich|| r.bereich===f.bereich) &&
+    (!f.status || r.status===f.status) &&
+    (!f.melder || r.melder.toLowerCase().includes(f.melder.toLowerCase()))
+  );
+}
 
-  try{
-    await json("/api/meldungen/save", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ id, titel, text, erstelltAm: datum })
-    });
-    $("#frmRapport").reset();
-    await loadMeldungen();
-    alert("Gespeichert.");
-  }catch(e){ alert("Fehler: "+e.message); }
-});
+function renderTable(){
+  const tbody = $("#table tbody");
+  const rows = applyFilter(state.list);
+  tbody.innerHTML = rows.map(r=>`
+    <tr data-id="${r.idmeldung}">
+      <td>${r.idmeldung}</td>
+      <td>${r.titel||""}</td>
+      <td>${r.anlage}</td>
+      <td>${r.bereich}</td>
+      <td>${r.status}</td>
+      <td>${r.melder}</td>
+      <td>${r.datum} ${r.zeit}</td>
+    </tr>
+  `).join("");
+}
 
-$("#frmUpload").addEventListener("submit", async (ev)=>{
-  ev.preventDefault();
-  const f = $("#fFile").files[0];
-  if(!f){ alert("Datei wählen"); return; }
-  const fd = new FormData();
-  fd.set("file", f);
-  const name = $("#fName").value.trim();
-  if(name) fd.set("filename", name);
+async function loadStart(){
+  const r = await api("/api/meldungen");
+  if(r.ok){ state.list = r.list; renderTable(); }
+}
 
-  try{
-    const r = await fetch("/api/upload", { method:"POST", body: fd });
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error||"Upload fehlgeschlagen");
-    $("#uploadResult").innerHTML = `✔️ <a target="_blank" href="${j.webViewLink||j.webContentLink}">${j.name}</a>`;
-    $("#frmUpload").reset();
-  }catch(e){ alert("Fehler: "+e.message); }
-});
+async function checkMe(){
+  const r = await api("/auth/me");
+  state.me = r.me || null;
+  setAvatar();
+  if(state.me) { await loadSystem(); await loadStart(); }
+}
 
-btnReload?.addEventListener("click", loadMeldungen);
+// Events
+$("#avatar").onclick = async ()=>{
+  if(!state.me){
+    const user = prompt("Benutzername / Vorname Nachname:");
+    const pass = prompt("Passwort:");
+    if(!user || !pass) return;
+    const r = await api("/auth/login", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ user, pass }) });
+    if(r.ok){ state.me=r.me; setAvatar(); await loadSystem(); await loadStart(); }
+    else alert("Login fehlgeschlagen");
+  }else{
+    if(confirm("Abmelden?")){ await api("/auth/logout", { method:"POST" }); state.me=null; setAvatar(); }
+  }
+};
 
-btnLoadDb?.addEventListener("click", async ()=>{
-  try{
-    const db = await json("/api/db/all");
-    const ul = $("#dbInfo");
-    ul.innerHTML = "";
-    for(const k of ["users","rapporte","massnahmen","meldungenDb"]){
-      const li = document.createElement("li");
-      li.textContent = `${k}: ${Array.isArray(db[k]?.items) ? db[k].items.length+" Einträge" : Object.keys(db[k]||{}).length+" Keys"}`;
-      ul.appendChild(li);
+$("#btn-home").onclick = ()=>{ location.href="/"; };
+
+$("#btn-new").onclick = async ()=>{
+  if(!state.me) return;
+  const anlage = prompt("Anlage:");
+  const bereich = prompt("Bereich:");
+  const titel = prompt("Titel (eine Zeile):");
+  const meldung = prompt("Detail (mehrzeilig erlaubt, Enter für neue Zeile):");
+  if(!anlage || !bereich || !titel || !meldung) return alert("Bitte alle Felder ausfüllen");
+  const r = await api("/api/meldungen", { method:"POST", headers:{ "Content-Type":"application/json"}, body:JSON.stringify({ anlage, bereich, titel, meldung }) });
+  if(r.ok){
+    alert("Gespeichert. Optional Foto hinzufügen…");
+    // einfache Upload-Abfrage
+    const f = await pickFile();
+    if(f){
+      const fd = new FormData(); fd.append("file", f);
+      await api(`/api/meldungen/${r.idmeldung}/upload`, { method:"POST", body:fd });
     }
-  }catch(e){ alert("DB konnte nicht geladen werden."); }
-});
+    await loadStart();
+  }else alert("Fehler beim Speichern");
+};
 
-btnLogout?.addEventListener("click", async ()=>{
-  await fetch("/logout", { method: "POST" });
-  location.reload();
-});
+$("#btn-users").onclick = async ()=>{
+  if(!state.me) return;
+  const r = await api("/api/users");
+  if(!r.ok) return alert("Keine Berechtigung");
+  const txt = r.list.map(u=>`${u.iduser}\t${u.vorname} ${u.nachname}\t${u.rolle}`).join("\n");
+  alert("Userliste:\n\n"+txt);
+};
+$("#btn-system").onclick = async ()=>{
+  if(!state.sys) return;
+  alert("Stammdaten bearbeiten – (Demoanzeige)\n\nAnlage:\n"+state.sys.anlage.join(", ")+"\n\nBereich:\n"+state.sys.bereich.join(", ")+"\n\nStatus:\n"+state.sys.status.join(", "));
+};
 
-me();
+["#f-anlage","#f-bereich","#f-status","#f-melder"].forEach(sel=>{
+  const el = $(sel);
+  el?.addEventListener("input", ()=>{
+    state.filter.anlage = $("#f-anlage").value;
+    state.filter.bereich= $("#f-bereich").value;
+    state.filter.status = $("#f-status").value;
+    state.filter.melder = $("#f-melder").value;
+    renderTable();
+  });
+});
+$("#f-reset").onclick = ()=>{
+  state.filter = { anlage:"",bereich:"",status:"",melder:"" };
+  ["#f-anlage","#f-bereich","#f-status","#f-melder"].forEach(s=>$(s).value="");
+  renderTable();
+};
+
+async function pickFile(){
+  return new Promise(resolve=>{
+    const inp = Object.assign(document.createElement("input"), { type:"file", accept:"image/*" });
+    inp.onchange = ()=> resolve(inp.files[0]||null);
+    inp.click();
+  });
+}
+
+checkMe();
+
