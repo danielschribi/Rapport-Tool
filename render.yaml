@@ -1,0 +1,23 @@
+services:
+- type: web
+  name: Rapport-Tool
+  runtime: node
+  plan: free
+  autoDeploy: true
+  buildCommand: "npm ci"
+  startCommand: "npm start"
+  envVars:
+  - key: NODE_VERSION
+    value: 18
+  - key: SESSION_SECRET
+    generateValue: true
+  - key: STORAGE_BACKEND
+    value: local
+  - key: DRIVE_SHARED_LINK
+    sync: false
+  - key: DRIVE_ROOT_FOLDER_ID
+    sync: false
+  - key: GOOGLE_APPLICATION_CREDENTIALS
+    value: /etc/secrets/google-service-account.json
+  secretFiles:
+  - name: google-service-account.json
